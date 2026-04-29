@@ -1,0 +1,58 @@
+# Python / cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Local IDE / assistant settings
+.vscode/
+.claude/
+
+# Environment / secrets
+.env
+.env.*
+
+# Large model / training artifacts
+*.ckpt
+*.safetensors
+*.pt
+*.pth
+*.bin
+*.onnx
+*.npz
+
+# Keep the SD3.5 model folder as a placeholder only.
+models/**
+!models/
+!models/stable-diffusion-3.5-medium/
+!models/stable-diffusion-3.5-medium/.gitkeep
+
+# Keep output folder structure only. Do not upload LoRA weights or generated images.
+outputs/**
+!outputs/
+!outputs/lora/
+!outputs/lora/.gitkeep
+!outputs/runs/
+!outputs/runs/.gitkeep
+!outputs/results/
+!outputs/results/.gitkeep
+
+# Keep the SD3.5 data used by the scripts, ignore stale experiment metadata/contact sheets.
+data/train_contact.jpg
+data/train/metadata.jsonl
+data/train/metadata.old_*.jsonl
+data/train/metadata_v6.jsonl
+data/train/metadata_v8.jsonl
+data/train/metadata_v9.jsonl
+
+# This GitHub snapshot focuses on the SD3.5 experiment.
+scripts/sd15_*.py
+scripts/sd35_train_lora.py
+
+# Local preview images
+output_lora.png
+output_sd15.png
+
+# Local notes / assignment handout not required for the public code snapshot.
+114_2_DLCV2_diffusion.pdf
+EXPERIMENT_LOG.md
