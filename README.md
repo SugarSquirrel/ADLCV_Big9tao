@@ -4,6 +4,8 @@ This repository contains the important code and small training dataset for the E
 
 The main experiment uses Stable Diffusion 3.5 Medium with LoRA / DreamBooth-LoRA fine-tuning to generate realistic road rockfall scenes.
 
+The learned trigger token is `<rfblk>`.
+
 ## Repository Layout
 
 ```text
@@ -31,7 +33,7 @@ The main experiment uses Stable Diffusion 3.5 Medium with LoRA / DreamBooth-LoRA
 
 ## Setup
 
-Use the `adlcv_sd` conda environment used for the experiment.
+Use a conda environment to keep the experiment dependencies isolated.
 
 Download SD3.5 Medium locally before training or inference:
 
@@ -50,7 +52,7 @@ Model weights are intentionally ignored by Git.
 
 ## Workflow
 
-Preprocess the 15 training images:
+Preprocess the 15-30 training images:
 
 ```bash
 python scripts/sd35_preprocess.py
