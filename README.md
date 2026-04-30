@@ -40,7 +40,6 @@ Three experimental conditions are evaluated:
 │   ├── sd35_download_model.py         # download SD 3.5 Medium from HuggingFace
 │   ├── sd35_preprocess.py             # center-crop + resize training images
 │   ├── sd35_train_dreambooth_lora.py  # DreamBooth + LoRA training
-│   ├── sd35_train_lora.py             # concept token injection helper
 │   ├── sd35_infer_combined.py         # inference for all three conditions
 │   └── sd35_evaluate.py               # CLIP Score + KID evaluation + charts
 ├── ex1_report.md
