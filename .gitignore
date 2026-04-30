@@ -27,7 +27,7 @@ models/**
 !models/stable-diffusion-3.5-medium/
 !models/stable-diffusion-3.5-medium/.gitkeep
 
-# Keep output folder structure only. Do not upload LoRA weights or generated images.
+# Keep output folder structure only. Do not upload LoRA weights, checkpoints, or generated images.
 outputs/**
 !outputs/
 !outputs/lora/
@@ -36,6 +36,8 @@ outputs/**
 !outputs/runs/.gitkeep
 !outputs/results/
 !outputs/results/.gitkeep
+!outputs/eval/
+!outputs/eval/.gitkeep
 
 # Keep the SD3.5 data used by the scripts, ignore stale experiment metadata/contact sheets.
 data/train_contact.jpg
@@ -45,9 +47,8 @@ data/train/metadata_v6.jsonl
 data/train/metadata_v8.jsonl
 data/train/metadata_v9.jsonl
 
-# This GitHub snapshot focuses on the SD3.5 experiment.
+# SD 1.5 scripts are not part of the final experiment.
 scripts/sd15_*.py
-scripts/sd35_train_lora.py
 
 # Local preview images
 output_lora.png

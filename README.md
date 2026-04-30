@@ -1,96 +1,155 @@
-# ADLCV Ex1 - SD3.5 DreamBooth-LoRA Rockfall Generation
+# ADLCV Ex1 — SD 3.5 DreamBooth-LoRA Rockfall Generation
 
-This repository contains the important code and small training dataset for the Ex1 rockfall image generation experiment.
+Generates synthetic road rockfall images using **Stable Diffusion 3.5 Medium** fine-tuned with **DreamBooth + LoRA** on 15 real images.
+Learned trigger token: `<rfblk>`.
 
-The main experiment uses Stable Diffusion 3.5 Medium with LoRA / DreamBooth-LoRA fine-tuning to generate realistic road rockfall scenes.
+Three experimental conditions are evaluated:
 
-The learned trigger token is `<rfblk>`.
+| | Base Model | Setting A | Setting B |
+|---|:---:|:---:|:---:|
+| LoRA | ✗ | ✓ | ✓ |
+| Steps | 35 | 35 | 8 |
+| CFG | 5.5 | 5.5 | 3.5 |
+| Images | 300 | 3,000 | 3,000 |
 
 ## Repository Layout
 
-```text
+```
 .
+├── assets/
+│   ├── base/          # Base Model qualitative samples (p1–p10.png)
+│   ├── eval/          # Evaluation charts (clip_per_prompt.png, summary.png)
+│   ├── settingA/      # Setting A qualitative samples
+│   ├── settingB/      # Setting B qualitative samples
+│   └── train/         # Training image examples
 ├── data/
-│   ├── raw/                 # 15 original rockfall training images
-│   └── train/               # 512x512 preprocessed images and metadata_v10.jsonl
-├── evaluation/              # CLIP score and KID evaluation scripts
+│   ├── raw/           # 15 original rockfall photos (not uploaded)
+│   └── train/         # 512×512 preprocessed images + metadata_v10.jsonl
 ├── models/
-│   └── stable-diffusion-3.5-medium/
-│       └── .gitkeep         # placeholder only; model weights are not uploaded
-├── outputs/
-│   ├── lora/                # placeholder for trained LoRA weights
-│   ├── runs/                # placeholder for generated images
-│   └── results/             # placeholder for curated results
-└── scripts/
-    ├── sd35_config.py
-    ├── sd35_download_model.py
-    ├── sd35_preprocess.py
-    ├── sd35_train_lora.py
-    ├── sd35_train_dreambooth_lora.py
-    ├── sd35_infer_combined.py
-    └── sd35_evaluate.py
+│   └── stable-diffusion-3.5-medium/   # not uploaded; see Setup
+├── outputs/           # all generated files; not uploaded
+│   ├── eval/          # CLIP/KID scores and auto-generated charts
+│   ├── lora/          # LoRA weights and concept token embeddings
+│   ├── results/v10db_final_infer/
+│   │   ├── base/      # Base Model outputs
+│   │   ├── settingA/  # Setting A outputs
+│   │   └── settingB/  # Setting B outputs
+│   └── runs/          # smoke test outputs
+├── scripts/
+│   ├── sd35_config.py                 # prompts and negative prompts
+│   ├── sd35_download_model.py         # download SD 3.5 Medium from HuggingFace
+│   ├── sd35_preprocess.py             # center-crop + resize training images
+│   ├── sd35_train_dreambooth_lora.py  # DreamBooth + LoRA training
+│   ├── sd35_train_lora.py             # concept token injection helper
+│   ├── sd35_infer_combined.py         # inference for all three conditions
+│   └── sd35_evaluate.py               # CLIP Score + KID evaluation + charts
+├── ex1_report.md
+└── README.md
 ```
 
 ## Setup
 
-Use a conda environment to keep the experiment dependencies isolated.
+```bash
+conda create -n adlcv_sd python=3.10 -y
+conda activate adlcv_sd
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+pip install diffusers transformers accelerate peft pillow
+pip install torchmetrics torch-fidelity matplotlib
+```
 
-Download SD3.5 Medium locally before training or inference:
+Download SD 3.5 Medium (requires HuggingFace login with model access):
 
 ```bash
 huggingface-cli login
-python scripts/sd35_download_model.py
+conda run -n adlcv_sd python scripts/sd35_download_model.py
 ```
-
-The model will be placed at:
-
-```text
-models/stable-diffusion-3.5-medium/
-```
-
-Model weights are intentionally ignored by Git.
 
 ## Workflow
 
-Preprocess the 15-30 training images:
+### 1 · Preprocess training data
+
+Place 15 raw images in `data/raw/`, then:
 
 ```bash
-python scripts/sd35_preprocess.py
+conda run -n adlcv_sd python scripts/sd35_preprocess.py
 ```
 
-Train DreamBooth-LoRA:
+Outputs 512×512 PNG files and `data/train/metadata_v10.jsonl`.
+
+### 2 · Train DreamBooth + LoRA
 
 ```bash
-python scripts/sd35_train_dreambooth_lora.py --force-recompute
+conda run -n adlcv_sd python scripts/sd35_train_dreambooth_lora.py
 ```
 
-Run a smoke inference:
+Add `--force-recompute` to discard the cached prior-image latents and regenerate them (needed if training data changes).
+
+Key parameters:
+
+| Flag | Default | Description |
+|---|:---:|---|
+| `--max-train-steps` | 600 | Total training steps |
+| `--learning-rate` | 3e-5 | Learning rate |
+| `--rank` | 8 | LoRA rank |
+| `--prior-weight` | 0.1 | Prior preservation loss weight λ |
+| `--save-every` | 50 | Checkpoint save interval |
+| `--force-recompute` | — | Re-generate prior image latent cache |
+
+Outputs to `outputs/lora/sksrockfall-v10-db/`:
+`pytorch_lora_weights.safetensors`, `concept_token_embeddings.pt`, and `checkpoint-*/` folders.
+
+### 3 · Inference
+
+**Setting A + B** (LoRA model, 300 images/prompt each):
 
 ```bash
-python scripts/sd35_infer_combined.py \
-  --lora-dir outputs/lora/sksrockfall-v10-db \
-  --output-root-a outputs/runs/sd35_v10db_settingA_smoke \
-  --output-root-b outputs/runs/sd35_v10db_settingB_smoke \
-  --num-images-per-prompt 2
+conda run -n adlcv_sd python scripts/sd35_infer_combined.py
 ```
 
-Run evaluation:
+**Base Model** (no LoRA, 30 images/prompt):
 
 ```bash
-python evaluation/clip_score.py \
-  --image-root outputs/runs/sd35_v10db_settingA_smoke \
-  --prompt-source sd35 \
-  --output outputs/runs/sd35_v10db_settingA_smoke/clip_score.txt
-
-python evaluation/kid_score.py \
-  --real-dir data/train \
-  --fake-root outputs/runs/sd35_v10db_settingA_smoke \
-  --bootstrap 1000 \
-  --output outputs/runs/sd35_v10db_settingA_smoke/kid_score.txt
+conda run -n adlcv_sd python scripts/sd35_infer_combined.py \
+    --no-lora --num-images-per-prompt 30
 ```
+
+Generation is resumable — already-existing images are skipped automatically.
+
+Use `--skip-a` / `--skip-b` to run only one LoRA setting.
+Use `--checkpoint checkpoint-400` to evaluate a mid-training checkpoint.
+
+### 4 · Evaluate (CLIP Score + KID)
+
+**Full evaluation** (all three conditions):
+
+```bash
+conda run -n adlcv_sd python scripts/sd35_evaluate.py \
+    --dir-base outputs/results/v10db_final_infer/base
+```
+
+**LoRA only** (Setting A + B):
+
+```bash
+conda run -n adlcv_sd python scripts/sd35_evaluate.py
+```
+
+**Re-plot only** (no recompute, uses saved `outputs/eval/eval_results.json`):
+
+```bash
+conda run -n adlcv_sd python scripts/sd35_evaluate.py --plot-only
+```
+
+**Skip CLIP recompute** (reload from JSON, recompute KID only):
+
+```bash
+conda run -n adlcv_sd python scripts/sd35_evaluate.py \
+    --dir-base outputs/results/v10db_final_infer/base --skip-clip
+```
+
+Charts are saved to `outputs/eval/`; copy to `assets/eval/` to include in the report.
 
 ## Notes
 
-- Stable Diffusion model files, LoRA checkpoints, generated images, and cache files are not uploaded.
-- The GitHub version keeps only placeholder folders for `models/` and `outputs/`.
-- `data/raw/` and `data/train/` are included because the dataset contains only 15 images.
+- Model weights (`*.safetensors`, `*.pt`), generated images, and LoRA checkpoints are excluded from this repository.
+- `data/train/` (15 images + captions) is included because the dataset is small.
+- `data/raw/` is not uploaded.
