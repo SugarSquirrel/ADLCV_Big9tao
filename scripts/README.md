@@ -10,9 +10,6 @@ This folder contains the active SD3.5 experiment scripts for rockfall image gene
 - `sd35_preprocess.py`  
   Build `data/train/metadata_v10.jsonl` and SD3.5 training images/captions.
 
-- `sd35_train_lora.py`  
-  Train SD3.5 transformer LoRA. Default output: `outputs/lora/sksrockfall-v10`.
-
 - `sd35_train_dreambooth_lora.py`  
   Train SD3.5 DreamBooth-LoRA with prior preservation. Default output: `outputs/lora/sksrockfall-v10-db`.
 
